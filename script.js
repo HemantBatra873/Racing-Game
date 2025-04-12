@@ -17,8 +17,23 @@ canvas.height = window.innerHeight;
 const playerImg = new Image();
 playerImg.src = "assets/player-car.svg";
 
-const enemyImg = new Image();
-enemyImg.src = "assets/enemy_car.svg";
+const enemyImgs = [];
+
+const enemyImageFiles = [
+  "enemy_car.svg",
+  "enemy2.png",
+  "enemy3.svg",
+  "enemy4.png",
+  "enemy5.png",
+  "enemy6.png",
+  "enemy7.png",
+];
+
+for (const file of enemyImageFiles) {
+  const img = new Image();
+  img.src = `assets/${file}`;
+  enemyImgs.push(img);
+}
 
 const roadImg = new Image();
 roadImg.src = "assets/road.png";
@@ -31,6 +46,10 @@ let player = {
   height: 100,
   speed: 7,
 };
+
+const roadWidth = canvas.width * 0.6;
+const roadLeftBoundary = (canvas.width - roadWidth) / 2;
+const roadRightBoundary = roadLeftBoundary + roadWidth;
 
 let enemies = [];
 let enemySpeed = 5;
@@ -89,12 +108,15 @@ document.addEventListener("keyup", (e) => {
 });
 
 function movePlayer() {
-  if ((keys["ArrowLeft"] || keys["a"] || keys["A"]) && player.x > 0) {
+  if (
+    (keys["ArrowLeft"] || keys["a"] || keys["A"]) &&
+    player.x > roadLeftBoundary
+  ) {
     player.x -= player.speed;
   }
   if (
     (keys["ArrowRight"] || keys["d"] || keys["D"]) &&
-    player.x + player.width < canvas.width
+    player.x + player.width < roadRightBoundary
   ) {
     player.x += player.speed;
   }
@@ -102,8 +124,17 @@ function movePlayer() {
 
 // Spawn enemies
 function spawnEnemy() {
-  const x = Math.random() * (canvas.width - 50);
-  enemies.push({ x: x, y: -100, width: 50, height: 100 });
+  const x =
+    roadLeftBoundary +
+    Math.random() * (roadRightBoundary - roadLeftBoundary - 50);
+  const randomIndex = Math.floor(Math.random() * enemyImgs.length);
+  enemies.push({
+    x: x,
+    y: -100,
+    width: 50,
+    height: 100,
+    img: enemyImgs[randomIndex],
+  });
 }
 
 // Draw functions
@@ -129,13 +160,13 @@ function drawPlayer() {
 function drawEnemies() {
   enemies.forEach((enemy) => {
     drawRotatedImage(
-      enemyImg,
+      enemy.img,
       enemy.x,
       enemy.y,
       enemy.width * 2,
       enemy.height,
       Math.PI / 2
-    ); // -90 degrees
+    );
   });
 }
 
@@ -182,6 +213,9 @@ window.onload = () => {
 
 // Main animation loop
 function animate() {
+  const minInterval = 400;
+  const newInterval = 1500 - score * 10;
+  spawnInterval = Math.max(minInterval, newInterval);
   if (gamePaused) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   movePlayer();
